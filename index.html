@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home od Sad - Ужас дома</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="ui">
+            <div id="stats">
+                <span id="levelInfo">Уровень: 1</span>
+                <span id="healthInfo">❤️ 3</span>
+                <span id="itemsInfo">🔦 0 | 🔑 0</span>
+            </div>
+            <div id="message"></div>
+        </div>
+    </div>
+
+    <div id="storyScreen" class="screen">
+        <div class="storyContent">
+            <h1>Home od Sad</h1>
+            <p>Ребёнок просыпается в полной темноте...</p>
+            <p>Вокруг - тишина и страх.</p>
+            <p>Где мама? Где папа?</p>
+            <p class="warning">⚠️ Что-то движется в тени...</p>
+            <button onclick="startGame()">Начать игру</button>
+        </div>
+    </div>
+
+    <div id="levelComplete" class="screen hidden">
+        <div class="screenContent">
+            <h2>Уровень пройден!</h2>
+            <p id="levelMessage"></p>
+            <button onclick="nextLevel()">Далее</button>
+        </div>
+    </div>
+
+    <div id="gameOver" class="screen hidden">
+        <div class="screenContent">
+            <h2>КОНЕЦ ИГРЫ</h2>
+            <p id="gameOverMessage"></p>
+            <button onclick="location.reload()">Начать заново</button>
+        </div>
+    </div>
+
+    <div id="endingScreen" class="screen hidden">
+        <div class="screenContent">
+            <h2 id="endingTitle">ФИНАЛ</h2>
+            <p id="endingText"></p>
+            <button onclick="location.reload()">В главное меню</button>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
