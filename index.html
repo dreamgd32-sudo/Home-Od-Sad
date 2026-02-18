@@ -1,19 +1,707 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Title</title>
+    <title>Home od Sad - Ужас дома</title>
     <style>
-        /* Add your CSS styles here */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #fff;
+        }
+        #gameContainer {
+            position: relative;
+            background: #000;
+            border: 3px solid #444;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+        }
+        canvas {
+            display: block;
+            background: linear-gradient(180deg, #0a0a0a 0%, #1a0a0a 100%);
+        }
+        #ui {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 10px;
+            border-top: 2px solid #444;
+        }
+        #stats {
+            display: flex;
+            justify-content: space-around;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        #stats span {
+            color: #4f4;
+        }
+        #message {
+            text-align: center;
+            height: 20px;
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+        .screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            font-family: Arial, sans-serif;
+        }
+        .screen.hidden {
+            display: none;
+        }
+        #storyScreen {
+            background: linear-gradient(135deg, #1a0a2e 0%, #0f3460 100%);
+        }
+        .storyContent {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 3px solid #ff0000;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+        }
+        .storyContent h1 {
+            font-size: 48px;
+            margin-bottom: 30px;
+            color: #ff0000;
+            text-shadow: 0 0 10px #ff0000;
+        }
+        .storyContent p {
+            font-size: 18px;
+            margin: 15px 0;
+            line-height: 1.6;
+            color: #ccc;
+        }
+        .storyContent .warning {
+            color: #ff6b6b;
+            font-weight: bold;
+            font-size: 20px;
+            margin: 30px 0;
+        }
+        .screenContent {
+            text-align: center;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #ff0000;
+            border-radius: 10px;
+            max-width: 500px;
+        }
+        .screenContent h2 {
+            font-size: 36px;
+            color: #ff0000;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #ff0000;
+        }
+        .screenContent p {
+            font-size: 16px;
+            margin: 15px 0;
+            color: #ddd;
+            line-height: 1.6;
+        }
+        button {
+            margin-top: 30px;
+            padding: 12px 30px;
+            font-size: 16px;
+            background: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+        button:hover {
+            background: #ff3333;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+            transform: scale(1.05);
+        }
+        button:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body>
-    <h1>Welcome to the Game</h1>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="ui">
+            <div id="stats">
+                <span id="levelInfo">Уровень: 1</span>
+                <span id="healthInfo">❤️ 3</span>
+                <span id="itemsInfo">🔦 0 | 🔑 0</span>
+            </div>
+            <div id="message"></div>
+        </div>
+    </div>
+
+    <div id="storyScreen" class="screen">
+        <div class="storyContent">
+            <h1>Home od Sad</h1>
+            <p>Ребёнок просыпается в полной темноте...</p>
+            <p>Вокруг - тишина и страх.</p>
+            <p>Где мама? Где папа?</p>
+            <p class="warning">⚠️ Что-то движется в тени...</p>
+            <button onclick="startGame()">Начать игру</button>
+        </div>
+    </div>
+
+    <div id="levelComplete" class="screen hidden">
+        <div class="screenContent">
+            <h2>Уровень пройден!</h2>
+            <p id="levelMessage"></p>
+            <button onclick="nextLevel()">Далее</button>
+        </div>
+    </div>
+
+    <div id="gameOver" class="screen hidden">
+        <div class="screenContent">
+            <h2>КОНЕЦ ИГРЫ</h2>
+            <p id="gameOverMessage"></p>
+            <button onclick="location.reload()">Начать заново</button>
+        </div>
+    </div>
+
+    <div id="endingScreen" class="screen hidden">
+        <div class="screenContent">
+            <h2 id="endingTitle">ФИНАЛ</h2>
+            <p id="endingText"></p>
+            <button onclick="location.reload()">В главное меню</button>
+        </div>
+    </div>
+
     <script>
-        // Add your game code here
-        console.log('Game Loaded');
-        // Game functionalities
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let gameState = 'story';
+let currentLevel = 1;
+let maxLevel = 20;
+let totalTorches = 0;
+let totalKeys = 0;
+let health = 3;
+let maxHealth = 3;
+let monsterAppeared = false;
+let storyProgress = 0;
+
+const player = {
+    x: 100,
+    y: 500,
+    width: 30,
+    height: 40,
+    velocityY: 0,
+    velocityX: 0,
+    jumping: false,
+    speed: 5,
+    jumpPower: 12,
+    grounded: false
+};
+
+let platforms = [];
+let enemies = [];
+let items = [];
+let particles = [];
+let monster = null;
+
+const keys = {};
+window.addEventListener('keydown', (e) => {
+    keys[e.key] = true;
+    if (e.key === ' ') {
+        e.preventDefault();
+        if (player.grounded) {
+            player.velocityY = -player.jumpPower;
+            player.grounded = false;
+        }
+    }
+});
+window.addEventListener('keyup', (e) => {
+    keys[e.key] = false;
+});
+
+class Platform {
+    constructor(x, y, width, height, color = '#4a4a4a') {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.color = color;
+        this.moving = false;
+        this.moveSpeed = 0;
+        this.moveRange = 0;
+    }
+
+    draw() {
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(this.x, this.y, this.width, this.height);
+    }
+
+    update() {
+        if (this.moving) {
+            this.x += this.moveSpeed;
+            if (Math.abs(this.x - this.initialX) > this.moveRange) {
+                this.moveSpeed *= -1;
+            }
+        }
+    }
+}
+
+class Enemy {
+    constructor(x, y, width, height, speed = 2, patrolRange = 150) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.speed = speed;
+        this.patrolRange = patrolRange;
+        this.direction = 1;
+        this.startX = x;
+        this.alive = true;
+    }
+
+    draw() {
+        if (!this.alive) return;
+        ctx.fillStyle = '#ff4444';
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.fillStyle = '#ffff00';
+        ctx.fillRect(this.x + 5, this.y + 5, 8, 8);
+        ctx.fillRect(this.x + this.width - 13, this.y + 5, 8, 8);
+        ctx.fillStyle = '#000';
+        ctx.fillRect(this.x + 6, this.y + 6, 4, 4);
+        ctx.fillRect(this.x + this.width - 12, this.y + 6, 4, 4);
+    }
+
+    update() {
+        if (!this.alive) return;
+        this.x += this.speed * this.direction;
+        if (Math.abs(this.x - this.startX) > this.patrolRange) {
+            this.direction *= -1;
+        }
+    }
+
+    checkCollision(rect) {
+        return this.x < rect.x + rect.width &&
+               this.x + this.width > rect.x &&
+               this.y < rect.y + rect.height &&
+               this.y + this.height > rect.y;
+    }
+}
+
+class Item {
+    constructor(x, y, type = 'torch') {
+        this.x = x;
+        this.y = y;
+        this.width = 20;
+        this.height = 20;
+        this.type = type;
+        this.collected = false;
+        this.bobbing = 0;
+    }
+
+    draw() {
+        if (this.collected) return;
+        this.bobbing += 0.05;
+        const bobY = this.y + Math.sin(this.bobbing) * 5;
+
+        if (this.type === 'torch') {
+            ctx.fillStyle = '#ffaa00';
+            ctx.fillRect(this.x, bobY, this.width, this.height);
+            ctx.fillStyle = '#ff6600';
+            ctx.fillRect(this.x + 5, bobY - 10, 10, 8);
+        } else if (this.type === 'key') {
+            ctx.fillStyle = '#ffff00';
+            ctx.fillRect(this.x + 5, bobY + 5, 10, 10);
+            ctx.fillRect(this.x, bobY + 8, 5, 4);
+        } else if (this.type === 'artifact') {
+            ctx.fillStyle = '#00ffff';
+            ctx.beginPath();
+            ctx.arc(this.x + 10, bobY + 10, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#0088ff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+    }
+
+    checkCollision(rect) {
+        return this.x < rect.x + rect.width &&
+               this.x + this.width > rect.x &&
+               this.y < rect.y + rect.height &&
+               this.y + this.height > rect.y;
+    }
+}
+
+class Monster {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 60;
+        this.height = 80;
+        this.health = 5;
+        this.speed = 3;
+        this.phase = 0;
+        this.attacking = false;
+    }
+
+    draw() {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.fillStyle = '#ff0000';
+        ctx.fillRect(this.x + 10, this.y + 15, 12, 12);
+        ctx.fillRect(this.x + this.width - 22, this.y + 15, 12, 12);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(this.x + 13, this.y + 18, 6, 6);
+        ctx.fillRect(this.x + this.width - 19, this.y + 18, 6, 6);
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(this.x + this.width / 2, this.y + 50, 15, 0, Math.PI);
+        ctx.stroke();
+    }
+
+    update(playerX) {
+        if (playerX < this.x) {
+            this.x -= this.speed;
+        } else {
+            this.x += this.speed;
+        }
+        this.phase = (this.phase + 1) % 60;
+        if (this.phase === 0) {
+            this.attacking = true;
+        }
+        if (this.phase === 10) {
+            this.attacking = false;
+        }
+    }
+
+    checkCollision(rect) {
+        return this.x < rect.x + rect.width &&
+               this.x + this.width > rect.x &&
+               this.y < rect.y + rect.height &&
+               this.y + this.height > rect.y;
+    }
+}
+
+function createLevel(levelNum) {
+    platforms = [];
+    enemies = [];
+    items = [];
+    monster = null;
+    monsterAppeared = false;
+
+    platforms.push(new Platform(0, 560, 800, 40, '#2a2a2a'));
+
+    const difficulty = Math.min(levelNum / 5, 3);
+
+    if (levelNum === 1) {
+        platforms.push(new Platform(200, 480, 150, 20));
+        platforms.push(new Platform(450, 400, 150, 20));
+        platforms.push(new Platform(150, 320, 200, 20));
+        items.push(new Item(250, 450, 'torch'));
+        enemies.push(new Enemy(400, 520, 30, 30, 2, 100));
+    } else if (levelNum === 2) {
+        platforms.push(new Platform(100, 480, 120, 20));
+        platforms.push(new Platform(300, 420, 120, 20));
+        platforms.push(new Platform(500, 360, 150, 20));
+        platforms.push(new Platform(200, 300, 100, 20));
+        items.push(new Item(350, 390, 'torch'));
+        items.push(new Item(550, 330, 'key'));
+        enemies.push(new Enemy(150, 520, 30, 30, 3, 150));
+        enemies.push(new Enemy(450, 520, 30, 30, 2.5, 120));
+    } else if (levelNum >= 3 && levelNum <= 5) {
+        for (let i = 0; i < 5 + Math.floor(difficulty); i++) {
+            const x = Math.random() * 650;
+            const y = 150 + i * 80;
+            platforms.push(new Platform(x, y, 80 + Math.random() * 50, 15));
+        }
+        for (let i = 0; i < Math.floor(difficulty) + 1; i++) {
+            items.push(new Item(Math.random() * 700, Math.random() * 400, 'torch'));
+        }
+        items.push(new Item(600, 200, 'key'));
+        for (let i = 0; i < Math.floor(difficulty) + 1; i++) {
+            enemies.push(new Enemy(Math.random() * 700, 520, 30, 30, 2 + difficulty, 150));
+        }
+    } else if (levelNum >= 6 && levelNum <= 15) {
+        for (let i = 0; i < 6 + Math.floor(difficulty); i++) {
+            const x = Math.random() * 650;
+            const y = 100 + i * 70;
+            const width = 60 + Math.random() * 60;
+            platforms.push(new Platform(x, y, width, 15));
+        }
+        for (let i = 0; i < 2 + Math.floor(difficulty); i++) {
+            items.push(new Item(Math.random() * 700, Math.random() * 450, 'torch'));
+        }
+        for (let i = 0; i < Math.floor(difficulty); i++) {
+            items.push(new Item(Math.random() * 700, Math.random() * 450, 'key'));
+        }
+        for (let i = 0; i < 2 + Math.floor(difficulty); i++) {
+            enemies.push(new Enemy(Math.random() * 700, 520, 30, 30, 2.5 + difficulty, 200));
+        }
+    } else if (levelNum >= 16 && levelNum < maxLevel) {
+        for (let i = 0; i < 8 + Math.floor(difficulty); i++) {
+            const x = Math.random() * 650;
+            const y = 80 + i * 60;
+            const width = 50 + Math.random() * 80;
+            platforms.push(new Platform(x, y, width, 15));
+        }
+        for (let i = 0; i < 3 + Math.floor(difficulty); i++) {
+            items.push(new Item(Math.random() * 700, Math.random() * 400, 'torch'));
+        }
+        for (let i = 0; i < 2 + Math.floor(difficulty); i++) {
+            items.push(new Item(Math.random() * 700, Math.random() * 400, 'key'));
+        }
+        items.push(new Item(700, 100, 'artifact'));
+        for (let i = 0; i < 3 + Math.floor(difficulty); i++) {
+            enemies.push(new Enemy(Math.random() * 700, 520, 30, 30, 3 + difficulty, 250));
+        }
+    } else if (levelNum === maxLevel) {
+        platforms.push(new Platform(100, 450, 150, 20));
+        platforms.push(new Platform(350, 380, 150, 20));
+        platforms.push(new Platform(600, 310, 150, 20));
+        platforms.push(new Platform(200, 250, 400, 20));
+        items.push(new Item(400, 200, 'artifact'));
+        monster = new Monster(650, 100);
+    }
+
+    platforms.push(new Platform(0, 600, 800, 10, '#8B0000'));
+
+    player.x = 50;
+    player.y = 500;
+    player.velocityY = 0;
+    player.velocityX = 0;
+    player.grounded = false;
+}
+
+function updatePlayer() {
+    if (keys['ArrowLeft'] || keys['a']) {
+        player.velocityX = -player.speed;
+    } else if (keys['ArrowRight'] || keys['d']) {
+        player.velocityX = player.speed;
+    } else {
+        player.velocityX *= 0.8;
+    }
+
+    player.x += player.velocityX;
+    player.velocityY += 0.5;
+    player.y += player.velocityY;
+    player.grounded = false;
+
+    if (player.x < 0) player.x = 0;
+    if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+    if (player.y > 600) {
+        health--;
+        if (health <= 0) {
+            gameState = 'gameOver';
+            document.getElementById('gameOverMessage').textContent = 'Ребёнок упал в темноту... Игра окончена.';
+        } else {
+            player.y = 500;
+            player.velocityY = 0;
+        }
+    }
+
+    for (let platform of platforms) {
+        if (player.velocityY > 0 &&
+            player.y + player.height <= platform.y + 5 &&
+            player.y + player.height + player.velocityY >= platform.y &&
+            player.x + player.width > platform.x &&
+            player.x < platform.x + platform.width) {
+            player.y = platform.y - player.height;
+            player.velocityY = 0;
+            player.grounded = true;
+        }
+    }
+}
+
+function draw() {
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    for (let platform of platforms) {
+        platform.draw();
+    }
+
+    for (let enemy of enemies) {
+        enemy.draw();
+    }
+
+    for (let item of items) {
+        item.draw();
+    }
+
+    if (monster) {
+        monster.draw();
+    }
+
+    ctx.fillStyle = '#00ff00';
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+    ctx.fillStyle = '#ffff00';
+    ctx.fillRect(player.x + 7, player.y + 8, 6, 6);
+    ctx.fillRect(player.x + 17, player.y + 8, 6, 6);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(player.x + 8, player.y + 9, 4, 4);
+    ctx.fillRect(player.x + 18, player.y + 9, 4, 4);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(player.x + 15, player.y + 20, 4, 0, Math.PI);
+    ctx.stroke();
+}
+
+function update() {
+    if (gameState !== 'playing') return;
+
+    updatePlayer();
+
+    for (let platform of platforms) {
+        platform.update();
+    }
+
+    for (let enemy of enemies) {
+        enemy.update();
+        if (enemy.checkCollision(player)) {
+            health--;
+            player.y -= 50;
+            player.velocityY = -8;
+            if (health <= 0) {
+                gameState = 'gameOver';
+                document.getElementById('gameOverMessage').textContent = 'Монстр поймал ребёнка...';
+            }
+        }
+    }
+
+    for (let item of items) {
+        if (!item.collected && item.checkCollision(player)) {
+            item.collected = true;
+            if (item.type === 'torch') {
+                totalTorches++;
+            } else if (item.type === 'key') {
+                totalKeys++;
+            }
+        }
+    }
+
+    if (monster) {
+        if (!monsterAppeared && player.y < 300) {
+            monsterAppeared = true;
+            document.getElementById('message').textContent = '⚠️ ЧТО-ТО ОГРОМНОЕ ПРОСНУЛОСЬ! ⚠️';
+        }
+
+        if (monsterAppeared) {
+            monster.update(player.x);
+            if (monster.checkCollision(player)) {
+                if (totalKeys >= 2) {
+                    gameState = 'ending';
+                    document.getElementById('endingTitle').textContent = 'СПАСЕНИЕ';
+                    document.getElementById('endingText').textContent = 'Ребёнок использует артефакты, чтобы запереться на чердаке.
+
+Внезапно раздаётся звук взрыва.
+Монстр исчезает в чёрной пыли.
+
+Когда утром приходит полиция, они находят ребёнка живым.
+Остаётся только вопрос: куда исчезли родители?...
+
+===== КОНЕЦ =====';
+                } else {
+                    gameState = 'ending';
+                    document.getElementById('endingTitle').textContent = 'ПРАВДА';
+                    document.getElementById('endingText').textContent = 'Так же, как его родители, ребёнка поглотила тьма.
+
+Монстр был голоден.
+Монстр был в доме.
+Монстр был всегда.
+
+И теперь он снова наполнен.
+Он ждёт следующую жертву.
+Он ждёт вас...
+
+===== КОНЕЦ =====';
+                }
+            }
+        }
+    }
+
+    if (player.x > canvas.width - 50 && player.y < 100) {
+        gameState = 'levelComplete';
+        storyProgress++;
+
+        let message = '';
+        if (currentLevel === 5) {
+            message = 'Ты находишь старый дневник... на нём кровь.';
+        } else if (currentLevel === 10) {
+            message = 'В подвале ты слышишь странные звуки. Что-то дышит в темноте...';
+        } else if (currentLevel === 15) {
+            message = 'Ты видишь фотографии родителей на стене. Они улыбаются. Но их глаза чёрные...';
+        } else if (currentLevel === maxLevel - 1) {
+            message = 'Ты добираешься до последней комнаты. Дверь медленно открывается...';
+        }
+
+        document.getElementById('levelMessage').textContent = message;
+    }
+
+    document.getElementById('levelInfo').textContent = `Уровень: ${currentLevel}/${maxLevel}`;
+    document.getElementById('healthInfo').textContent = `❤️ ${health}`;
+    document.getElementById('itemsInfo').textContent = `🔦 ${totalTorches} | 🔑 ${totalKeys}`;
+
+    draw();
+}
+
+function startGame() {
+    document.getElementById('storyScreen').classList.add('hidden');
+    gameState = 'playing';
+    createLevel(1);
+}
+
+function nextLevel() {
+    document.getElementById('levelComplete').classList.add('hidden');
+    currentLevel++;
+
+    if (currentLevel > maxLevel) {
+        gameState = 'ending';
+        document.getElementById('endingTitle').textContent = 'ЭПИЛОГ';
+        document.getElementById('endingText').textContent = 'Ты выбежал из дома на рассвете.
+
+Полиция уже ждала снаружи.
+Они говорят, что дом пустой.
+Что там никого не было уже несколько лет.
+
+Но ты знаешь правду.
+Ты чувствовал его дыхание.
+Ты видел его глаза.
+
+И теперь, ночью, когда ты закрываешь глаза,
+ты всё ещё слышишь его голос...
+
+===== КОНЕЦ =====';
+        document.getElementById('endingScreen').classList.remove('hidden');
+        return;
+    }
+
+    gameState = 'playing';
+    createLevel(currentLevel);
+}
+
+setInterval(update, 1000 / 60);
     </script>
 </body>
 </html>
